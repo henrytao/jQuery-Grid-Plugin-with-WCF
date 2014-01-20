@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Database Name="DWH2008" Class="LoggerDataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Connection Mode="AppSettings" ConnectionString="Data Source=HTAOX\SQLEXPRESS2008;Initial Catalog=DWH2008;Integrated Security=True" SettingsObjectName="LogServiceHost.Properties.Settings" SettingsPropertyName="DWH2008ConnectionString" Provider="System.Data.SqlClient" />
+  <Table Name="dbo.LOGGER" Member="LOGGERs">
+    <Type Name="LOGGER">
+      <Column Name="UID" Type="System.Int64" DbType="BigInt NOT NULL IDENTITY" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="COMPANY" Type="System.String" DbType="VarChar(10) NOT NULL" CanBeNull="false" />
+      <Column Name="COB_DATE" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="PROCESS_ID" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="FILE_NAME" Type="System.String" DbType="VarChar(50)" CanBeNull="true" />
+      <Column Name="DATE_AND_TIME" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="ENTRY_TYPE" Type="System.String" DbType="VarChar(5)" CanBeNull="true" />
+      <Column Name="MESSAGE" Type="System.String" DbType="VarChar(4000)" CanBeNull="true" />
+      <Column Name="RECORD_COUNT_SOURCE" Type="System.String" DbType="VarChar(15)" CanBeNull="true" />
+      <Column Name="COUNT" Type="System.Int32" DbType="Int" CanBeNull="true" />
+    </Type>
+  </Table>
+</Database>

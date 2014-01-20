@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>jqGrid Demos</title>
+<link rel="stylesheet" type="text/css" media="screen" href="themes/steel/grid.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="themes/jqModal.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="themes/dropdown.css" />
+<link rel="Stylesheet" type="text/css" media="screen" href="themes/skins/simple/simple.css" />
+
+<script type="text/javascript" src="lib/jquery.js"></script>
+<script type="text/javascript">
+    function IncludeJS(jsFile) {
+        var oHead = document.getElementsByTagName('head')[0];
+        var oScript = document.createElement('script');
+        oScript.type = 'text/javascript';
+        oScript.charset = 'utf-8';
+        oScript.src = jsFile;
+        oHead.appendChild(oScript);
+    };
+    IncludeJS('lib/jquery.jqGrid.js');
+    IncludeJS('lib/jquery.sexy-combo-2.0.6.min.js');
+</script>
+</head>
+<body style="background-color:#e3dfd1;">
+
+<form>
+    <table>
+        <tr>
+            <td><div id="cobdates-container"/></td>
+            <td><div id="filenames-container"/></td>
+        </tr>
+    </table>
+    
+    <div style="position:relative;height:475px;width:905px;background-color:#A9A9A9;">
+        <table>
+            <tr>
+               <td>
+                <div style="width:590px;">
+                    <table id="master" class="scroll"></table>
+                        <div id="pager1" class="scroll" style="text-align:center;"></div>
+                </div>
+               </td>               
+               <td>
+                <div style="position:absolute;top:5px;right:5px;width:258px;">
+                    <table id="counts" class="scroll"></table>
+                    <div id="pager2" class="scroll" style="text-align:center;"></div>
+                </div>               
+               </td> 
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <table id="detail" class="scroll" cellpadding="0" cellspacing="0"></table>
+                    <div id="pager3" class="scroll" style="text-align:center;"></div>        
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>
+
+<script type="text/javascript">
+//jQuery.noConflict();
+
+/*
+jQuery(document).ready(function() {
+    jQuery.ajax({
+        type: "POST",
+        url: "http://htaox:8168/LoggerService/GetDetail?filename=all&nd=1246883438361&_search=false&rows=10&page=1&sidx=Uid&sord=asc",
+        //data: "{}",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function(data) {
+            alert(data.d);
+            //debugger;
+        },
+        error: function(request, error) {
+            alert(error);
+        }
+    });
+});
+*/
+
+    var company;
+    var cobdate = -1;
+    var filename;
+    var service_endpoint = "http://localhost:8168/LoggerService/";
+
+    $(document).ready(function() {
+        //Create ComboBox for COB Date.
+        $.sexyCombo.create({
+            name: "cobdates-combo",
+            id: "cobdates-combo",
+            skin: "simple",
+            container: "#cobdates-container",
+            url: service_endpoint + "GetCobDates",
+            dropUp: false,
+            //autoFill: true,
+            emptyText: "Choose COB Date...",
+            changeCallback: function() {
+                var new_cobdate = this.getHiddenValue();
+                if (new_cobdate != cobdate){
+                    cobdate = new_cobdate;                        
+                    $("#master").setGridParam({ url: service_endpoint + "GetHeader?company=default&cobdate=" + cobdate, page: 1 })
+			            .trigger('reloadGrid'); 
+			    }           
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        $.sexyCombo.create({
+            name: "filenames-combo",
+            id: "filenames-combo",
+            skin: "simple",
+            container: "#filenames-container",
+            url: service_endpoint + "GetFileNames",
+            dropUp: false,
+            emptyText: "Choose File Name...",
+            changeCallback: function() {
+
+                var new_filename = this.getHiddenValue();
+                if (filename != new_filename){                    
+                    filename = new_filename;
+                    var ids = 'company=' + company + '&cobdate=' + cobdate + '&filename=' + filename;
+                    var ids_array = ids.toString().split('&');
+                    var fullname_label = ids_array[0].replace('company=', 'Company: ') + ids_array[1].replace('cobdate=', ' CobDate: ') + ids_array[2].replace('filename=', ' FileName: ');
+                    
+                    $("#detail").setGridParam({ url: service_endpoint + "GetDetail?" + ids, page: 1 })
+			            .setCaption("Detail: " + fullname_label)
+			            .trigger('reloadGrid');
+
+                    $("#counts").setGridParam({ url: service_endpoint + "GetCounts?" + ids, page: 1 })
+			            .setCaption("Counts: " + filename)
+			            .trigger('reloadGrid');
+                }
+            }
+        });
+    });
+
+    $(document).ready(function() {
+
+        $("#counts").jqGrid({
+            datatype: "json",
+            colNames: ['ProcessId', 'RecordCountSource', 'Count'],
+            colModel: [
+            { name: 'ProcessId', index: 'ProcessId', width: 60, align: "right" },
+            { name: 'RecordCountSource', index: 'RecordCountSource', width: 120, sortable: false },
+            { name: 'Count', index: 'Count', width: 50, sortable: false }
+            ],
+            pager: $('#pager2'),
+            rowNum: 10,
+            rowList: [10, 20, 30],
+            imgpath: 'themes/steel/images',
+            sortname: 'ProcessId',
+            viewrecords: true,
+            sortorder: "asc",
+            jsonReader: {
+                root: "rows",
+                page: "page",
+                total: "total",
+                records: "records",
+                repeatitems: false,
+                id: "ProcessId" + "FileName"
+            },
+            caption: "Counts"
+        }).navGrid('#pager2', { edit: false, add: false, del: false, view: false, refresh: false, search: false });
+
+        $("#detail").jqGrid({
+            datatype: "json",
+            colNames: ['Uid', 'ProcessId', 'DateAndTime', 'EntryType', 'Message', 'RecordCountSource', 'Count'],
+            colModel: [
+        { name: 'Uid', index: 'Uid', width: 40 },
+        { name: 'ProcessId', index: 'ProcessId', width: 60, align: "right" },
+        { name: 'DateAndTime', index: 'EntryType', width: 100, align: "right" },
+        { name: 'EntryType', index: 'EntryType', width: 50 },
+        { name: 'Message', index: 'Message', width: 435, sortable: false },
+        { name: 'RecordCountSource', index: 'RecordCountSource', width: 100, sortable: false },
+        { name: 'Count', index: 'Count', width: 50, sortable: false }
+        ],
+            pager: $('#pager3'),
+            rowNum: 10,
+            rowList: [10, 20, 30],
+            imgpath: 'themes/steel/images',
+            sortname: 'Uid',
+            viewrecords: true,
+            sortorder: "asc",
+            jsonReader: {
+                root: "rows",
+                page: "page",
+                total: "total",
+                records: "records",
+                repeatitems: false,
+                id: "Uid"
+            },
+            caption: "Detail"
+        }).navGrid('#pager3', { edit: false, add: false, del: false, view: false, refresh: false });
+
+        // Load the master grid LAST:
+        $("#master").jqGrid({
+            url: service_endpoint + "GetHeader?company=default&cobdate=" + cobdate,
+            datatype: "json",
+            colNames: ['ProcessId(s)', 'FileName', 'ElapsedTime', 'StartTime', 'EndTime'],
+            colModel: [
+        { name: 'ProcessIds', index: 'ProcessIds', width: 50, align: "right" },
+        { name: 'FileName', index: 'FileName', width: 180 },
+        { name: 'ElapsedTime', index: 'ElapsedTime', width: 100, align: "right" },
+        { name: 'StartTime', index: 'StartTime', width: 120 },
+        { name: 'EndTime', index: 'EndTime', width: 120 },
+        ],
+            pager: $('#pager1'),
+            rowNum: 10,
+            rowList: [10, 20, 30],
+            imgpath: 'themes/steel/images',
+            sortname: 'ProcessId',
+            viewrecords: true,
+            sortorder: "asc",
+            jsonReader: {
+                root: "rows",
+                page: "page",
+                total: "total",
+                records: "records",
+                repeatitems: false,
+                id: "Id"
+            },
+            caption: "Header",
+            multiselect: false,
+            loadComplete: function() {
+                var ids = $("#master").getDataIDs();
+                var ids_array = ids.toString().split('&');
+                company = ids_array[0].replace('company=', '');
+                cobdate = ids_array[1].replace('cobdate=', '');
+
+                $('#master').setCaption('Header: ' + ids_array[0].replace('company=', 'Company: ') + ids_array[1].replace('cobdate=', ' COB Date: '));
+                $('#master').setSelection(ids[0]);
+            },
+            onSelectRow: function(ids) {
+
+                var selected_row = ($('#master').getGridParam('selrow'));
+                for (var i = 0, len = $('tr.selected').length; i < len; ++i) {
+
+                    if ($('tr.selected')[i]) {
+                        if ($('tr.selected')[i].id != selected_row)
+                            $('tr.selected')[i].className = $('tr.selected')[i].className.replace(' selected', '');
+                    }
+                }
+                
+                if (ids == null) {
+                    return;
+                }
+                else {
+                    var ids_array = ids.toString().split('&');
+                    var filename_label = ids_array[2].replace('filename=', '');
+                    var fullname_label = ids_array[0].replace('company=', 'Company: ') + ids_array[1].replace('cobdate=', ' CobDate: ') + ids_array[2].replace('filename=', ' FileName: ');
+
+                    filename = filename_label;
+                    
+                    $("#detail").setGridParam({ url: service_endpoint + "GetDetail?" + ids, page: 1 })
+			        .setCaption("Detail: " + fullname_label)
+			        .trigger('reloadGrid');
+
+                    $("#counts").setGridParam({ url: service_endpoint + "GetCounts?" + ids, page: 1 })
+			        .setCaption("Counts: " + filename_label)
+			        .trigger('reloadGrid');
+                }
+            }
+        }).navGrid('#pager1', { edit: false, add: false, del: false, view: false, refresh: false });
+
+    });
+</script>
+</body>
+</html>
